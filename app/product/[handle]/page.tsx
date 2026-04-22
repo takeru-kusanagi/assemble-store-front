@@ -109,7 +109,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ hand
   return (
     <main className="min-h-screen bg-white text-gray-900 p-6 md:p-12 font-sans">
       <div className="max-w-6xl mx-auto mb-8">
-        <Link href="/" className="text-gray-400 hover:text-black transition tracking-widest text-sm">
+        <Link href="/store" className="text-gray-400 hover:text-black transition tracking-widest text-sm">
           ← BACK TO STORE
         </Link>
       </div>
