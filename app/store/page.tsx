@@ -4,47 +4,57 @@ import Link from 'next/link';
 const shopifyDomain = process.env.SHOPIFY_STORE_DOMAIN;
 const storefrontAccessToken = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
 
-// ★変更1：関数が「tag」を受け取れるようにする
+// app/store/page.tsx の上部（getStoreData関数を丸ごと書き換え！）
+
 async function getStoreData(tag?: string) {
   const endpoint = `https://${shopifyDomain}/api/2024-01/graphql.json`;
-  
-  // ★変更2：Shopifyへの要求（Query）を、タグで絞り込めるように変更
-  // tagが指定されていれば `tag:〇〇` で検索し、なければ全件取得する
-  const query = `
-    query getProducts($query: String!) {
+
+  // =================================================================
+  // パターンA：タグが選ばれている時（今まで通り、タグで商品を絞り込む）
+  // =================================================================
+  const queryWithTag = `
+    query getProductsByTag($query: String!) {
       products(first: 20, query: $query) {
         edges {
           node {
             id
             title
             handle
-            priceRange {
-              minVariantPrice {
-                amount
-              }
-            }
-            images(first: 1) {
-              edges {
-                node {
-                  url
-                  altText
-                }
-              }
+            priceRange { minVariantPrice { amount } }
+            images(first: 1) { edges { node { url altText } } }
+          }
+        }
+      }
+      menu(handle: "brands") { items { title } }
+    }
+  `;
+
+  // =================================================================
+  // パターンB：Allの時（Shopifyの「all-items」コレクションを【手動並び順】で取得）
+  // =================================================================
+  const queryCollection = `
+    query getCollectionProducts {
+      collection(handle: "all-items") {
+        # ★ここが魔法！ sortKey: MANUAL で、タケルさんのドラッグ＆ドロップ順を完璧に再現します
+        products(first: 20, sortKey: MANUAL) {
+          edges {
+            node {
+              id
+              title
+              handle
+              priceRange { minVariantPrice { amount } }
+              images(first: 1) { edges { node { url altText } } }
             }
           }
         }
       }
-      menu(handle: "brands") {
-        items {
-          title
-        }
-      }
+      menu(handle: "brands") { items { title } }
     }
   `;
 
-  // tagがあればそれを使い、なければ "available_for_sale:true"（販売中のもの全て）などにするのが一般的ですが、
-  // 今回はシンプルに、tagがあればタグ検索、なければ全件という形にします。
-  const searchQuery = tag ? `tag:${tag}` : "";
+  // タグがあればパターンA、なければパターンBの要求書を使う
+  const query = tag ? queryWithTag : queryCollection;
+  const variables = tag ? { query: `tag:${tag}` } : {};
 
   const res = await fetch(endpoint, {
     method: 'POST',
@@ -52,21 +62,24 @@ async function getStoreData(tag?: string) {
       'Content-Type': 'application/json',
       'X-Shopify-Storefront-Access-Token': storefrontAccessToken!,
     },
-    // query と variables を一緒に送る
-    body: JSON.stringify({ 
-      query, 
-      variables: { query: searchQuery } 
-    }),
+    body: JSON.stringify({ query, variables }),
     cache: 'no-store', 
   });
 
   const json = await res.json();
   
+  // タグの有無によって、Shopifyから返ってくるデータの「場所」が違うので整える
+  const productsEdges = tag 
+    ? json.data?.products?.edges || [] 
+    : json.data?.collection?.products?.edges || [];
+
   return {
-    products: json.data?.products?.edges || [],
+    products: productsEdges,
     brands: json.data?.menu?.items || [],
   };
 }
+
+// （この下の export default async function StorePage... はそのまま！）
 
 // ★変更3：Next.jsの仕様変更に合わせ、searchParams を非同期で受け取る
 export default async function StorePage({
@@ -84,7 +97,7 @@ export default async function StorePage({
   return (
     <main className="min-h-screen bg-white text-gray-900 font-sans antialiased relative">
       
-      <div className="max-w-[1600px] mx-auto px-6 md:px-12 py-12 md:py-20 flex flex-col md:flex-row gap-12 md:gap-32 lg:gap-60">
+      <div className="max-w-[1600px] mx-auto px-6 md:px-12 py-12 md:py-20 flex flex-col md:flex-row gap-12 md:gap-18 lg:gap-4">
 
         {/* =========================================
             左側：サイドバー（PCのみ表示）
@@ -143,7 +156,7 @@ export default async function StorePage({
               No items found for "{tag}"
             </div>
           ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-12 md:gap-x-8 md:gap-y-16">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-12 md:gap-x-2 md:gap-y-8">
               {products.map(({ node }: any) => (
                 <Link href={`/product/${node.handle}`} key={node.id} className="group block">
                   {node.images.edges[0] && (

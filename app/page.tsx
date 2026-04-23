@@ -61,7 +61,7 @@ export default async function WelcomePage() {
       </div>
 
       <div className="text-center mt-12 mb-10">
-        <Link href="/store" className="text-sm tracking-[.3em] font-light text-black hover:text-gray-400 transition-all duration-300">
+        <Link href="/store" className="text-sm tracking-[.3em] font-medium text-black hover:text-gray-400 transition-all duration-300">
           ENTER STORE
         </Link>
       </div>
