@@ -1,26 +1,26 @@
-// src/app/product/[handle]/page.tsx
+// app/product/[handle]/page.tsx
 import Link from 'next/link';
-// ★追加：別のURLにユーザーを強制ワープ（リダイレクト）させる魔法の関数
-import { redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 
-const shopifyDomain = process.env.SHOPIFY_STORE_DOMAIN;
-const storefrontAccessToken = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
-
+// Shopifyから商品データと「2つの」ポリシーデータを取得
 async function getProduct(handle: string) {
-  const endpoint = `https://${shopifyDomain}/api/2024-01/graphql.json`;
+  const domain = process.env.SHOPIFY_STORE_DOMAIN;
+  const token = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
 
+  // ★修正：エイリアス（名前付け）を使って、2つのページを同時に要求する
   const query = `
-    {
-      product(handle: "${handle}") {
-        id
+    query ProductAndPolicyQuery($handle: String!) {
+      product(handle: $handle) {
         title
-        description
+        descriptionHtml
+        tags
+        availableForSale
         priceRange {
           minVariantPrice {
             amount
           }
         }
-        images(first: 1) {
+        images(first: 20) {
           edges {
             node {
               url
@@ -28,121 +28,153 @@ async function getProduct(handle: string) {
             }
           }
         }
-        variants(first: 1) {
-          edges {
-            node {
-              id
-            }
-          }
-        }
+      }
+      storePolicy: page(handle: "store-policy") {
+        body
+      }
+      shippingPolicy: page(handle: "payments-shipping") {
+        body
       }
     }
   `;
 
-  const res = await fetch(endpoint, {
+  const res = await fetch(`https://${domain}/api/2024-01/graphql.json`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Shopify-Storefront-Access-Token': storefrontAccessToken!,
+      'X-Shopify-Storefront-Access-Token': token!,
     },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ query, variables: { handle } }),
+    cache: 'no-store',
   });
 
+  if (!res.ok) return null;
   const json = await res.json();
-  return json.data.product;
+  
+  // ★修正：3つのデータをまとめて返す
+  return {
+    product: json.data?.product,
+    storePolicy: json.data?.storePolicy?.body,
+    shippingPolicy: json.data?.shippingPolicy?.body
+  };
 }
 
-export default async function ProductDetail({ params }: { params: Promise<{ handle: string }> }) {
-  const resolvedParams = await params;
-  const product = await getProduct(resolvedParams.handle);
+export default async function ProductPage({ params }: { params: Promise<{ handle: string }> }) {
+  const { handle } = await params;
+  
+  const data = await getProduct(handle);
 
-  if (!product) {
-    return <div className="p-10 text-center font-sans">商品が見つかりませんでした。</div>;
-  }
+  if (!data || !data.product) notFound();
 
-  // ★追加：カートを作成して、Shopifyの決済画面に飛ぶ「Server Action」
-  async function createCartAndCheckout() {
-    "use server"; // この関数は裏側のサーバーでだけ動かす、という絶対の掟
+  const product = data.product;
+  const storePolicy = data.storePolicy; 
+  const shippingPolicy = data.shippingPolicy; 
 
-    // 取得しておいたバリエーションIDを取り出す
-    const variantId = product.variants.edges[0].node.id;
-
-    // Cartを作るための「書き込み用」の要求書（Mutation）
-    const mutationQuery = `
-      mutation {
-        cartCreate(
-          input: {
-            lines: [
-              {
-                merchandiseId: "${variantId}",
-                quantity: 1
-              }
-            ]
-          }
-        ) {
-          cart {
-            checkoutUrl
-          }
-        }
-      }
-    `;
-
-    // Shopifyに「カート作って！」と送信
-    const res = await fetch(`https://${shopifyDomain}/api/2024-01/graphql.json`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Shopify-Storefront-Access-Token': storefrontAccessToken!,
-      },
-      body: JSON.stringify({ query: mutationQuery }),
-    });
-
-    const json = await res.json();
-    
-    // Shopifyが作ってくれた「あなた専用の決済画面のURL」を受け取る
-    const checkoutUrl = json.data.cartCreate.cart.checkoutUrl;
-
-    // そのURLにユーザーを強制ワープ！
-    redirect(checkoutUrl);
-  }
+  const title = product.title;
+  const price = Math.floor(product.priceRange.minVariantPrice.amount).toLocaleString();
+  const images = product.images.edges.map((edge: any) => edge.node);
+  const tags = product.tags;
+  const isAvailable = product.availableForSale;
 
   return (
-    <main className="min-h-screen bg-white text-gray-900 p-6 md:p-12 font-sans">
-      <div className="max-w-6xl mx-auto mb-8">
-        <Link href="/store" className="text-gray-400 hover:text-black transition tracking-widest text-sm">
+    <main className="min-h-screen bg-white text-black font-sans antialiased">
+      
+      <div className="px-6 md:px-12 py-8">
+        <Link href="/store" className="text-[10px] tracking-[.2em] text-gray-500 hover:text-black transition duration-300">
           ← BACK TO STORE
         </Link>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-12 max-w-6xl mx-auto">
-        <div className="md:w-1/2">
-          {product.images.edges[0] && (
-            <img
-              src={product.images.edges[0].node.url}
-              alt={product.title}
-              className="w-full h-auto object-cover bg-gray-50 border border-gray-100"
-            />
-          )}
-        </div>
+      <div className="max-w-[1400px] mx-auto px-6 md:px-12 pb-32 flex flex-col md:flex-row gap-12 md:gap-24">
 
-        <div className="md:w-1/2 flex flex-col justify-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-black tracking-wide">
-            {product.title}
-          </h1>
-          <p className="text-2xl text-gray-500 mb-8">
-            ¥{parseInt(product.priceRange.minVariantPrice.amount).toLocaleString()}
-          </p>
-          <div className="mb-12 leading-relaxed text-gray-800 whitespace-pre-wrap">
-            {product.description}
+        {/* 左側（画像エリア） */}
+        <div className="w-full md:w-[60%]">
+          <div className="flex md:flex-col overflow-x-auto md:overflow-x-visible snap-x snap-mandatory scrollbar-hide gap-4">
+              {images.map((img: any, index: number) => (
+              <div key={index} className="min-w-full md:min-w-0 snap-center bg-[#f9f9f9] flex items-center justify-center p-0 md:p-0">
+                  <img src={img.url} alt={img.altText || title} className="w-full h-auto object-contain mix-blend-multiply" />
+              </div>
+              ))}
           </div>
 
-          {/* ★変更：ボタンを form で囲み、action にさっきの関数をセットする */}
-          <form action={createCartAndCheckout}>
-            <button type="submit" className="bg-black text-white px-8 py-4 text-lg font-bold hover:bg-gray-800 transition duration-300 w-full text-center tracking-widest">
-              ADD TO CART
-            </button>
-          </form>
+          <div className="flex md:hidden justify-center gap-2 mt-4">
+              {images.map((_: any, i: number) => (
+              <div key={i} className="w-1 h-1 bg-gray-300 rounded-full"></div>
+              ))}
+          </div>
         </div>
+
+        {/* 右側（情報エリア） */}
+        <div className="w-full md:w-[40%] relative">
+          <div className="md:sticky md:top-32 flex flex-col">
+            
+            <div className="text-[10px] tracking-widest text-gray-500 uppercase mb-4">
+              {tags.length > 0 ? tags.join(' / ') : 'ARCHIVE'}
+            </div>
+
+            <h1 className="text-base md:text-lg font-normal tracking-wide mb-4 leading-relaxed text-black">
+              {title}
+            </h1>
+            
+            <p className="text-xs tracking-widest text-gray-800 mb-10">
+              ¥ {price}
+            </p>
+
+            <div 
+              className="prose prose-sm font-light text-gray-900 tracking-wider leading-loose text-xs mb-12 whitespace-pre-line"
+              dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
+            />
+
+            <div className="mb-12 border-t border-gray-200 pt-8">
+              {isAvailable ? (
+                <button className="w-full bg-black text-white py-4 text-xs tracking-[.2em] hover:bg-gray-800 transition duration-300">
+                  ADD TO BAG
+                </button>
+              ) : (
+                <button disabled className="w-full bg-gray-100 text-gray-400 py-4 text-xs tracking-[.2em] cursor-not-allowed border border-gray-200">
+                  SOLD OUT
+                </button>
+              )}
+            </div>
+
+            {/* ★規約アコーディオンエリア */}
+            <div className="flex flex-col border-t border-gray-200 pt-8 text-[10px] tracking-widest text-black">
+              
+              {/* 1つ目：Store Policy (Condition & Returns) */}
+              <details className="group border-b border-gray-100 pb-5 mb-5">
+                <summary className="flex justify-between items-center cursor-pointer list-none outline-none">
+                  <span>Store Policy</span>
+                  <span className="group-open:rotate-45 transition-transform duration-300 text-sm">+</span>
+                </summary>
+                <div className="mt-6 lowercase leading-relaxed text-gray-500 normal-case tracking-normal">
+                  {storePolicy ? (
+                    <div className="prose prose-sm text-[11px] leading-loose whitespace-pre-line" dangerouslySetInnerHTML={{ __html: storePolicy }} />
+                  ) : (
+                    <p className="text-[11px]">Loading Error</p>
+                  )}
+                </div>
+              </details>
+
+              {/* 2つ目：Payments & Shipping */}
+              <details className="group border-b border-gray-100 pb-5 mb-5">
+                <summary className="flex justify-between items-center cursor-pointer list-none outline-none">
+                  <span>Payments & Shipping</span>
+                  <span className="group-open:rotate-45 transition-transform duration-300 text-sm">+</span>
+                </summary>
+                <div className="mt-6 lowercase leading-relaxed text-gray-500 normal-case tracking-normal">
+                  {shippingPolicy ? (
+                    <div className="prose prose-sm text-[11px] leading-loose whitespace-pre-line" dangerouslySetInnerHTML={{ __html: shippingPolicy }} />
+                  ) : (
+                    <p className="text-[11px]">Loading Error</p>
+                  )}
+                </div>
+              </details>
+
+            </div>
+
+          </div>
+        </div>
+
       </div>
     </main>
   );

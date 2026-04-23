@@ -20,33 +20,89 @@ export default function RootLayout({
     <html lang="ja">
       <body className={`${inter.className} bg-white text-gray-900 antialiased flex flex-col min-h-screen`}>
         
-        <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100">
-          <div className="max-w-6xl mx-auto flex justify-between items-center p-6 md:px-12">
+        {/* ▼ 魔法のスイッチ（スマホ用メニューの開閉を管理） */}
+        <input type="checkbox" id="global-mobile-menu" className="peer hidden" />
+
+        <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100">
+          <div className="max-w-[1600px] mx-auto flex justify-between items-center p-5 md:px-12">
             
-            {/* ▼ 魔法1：ロゴのサイズ調整
-                スマホ: text-xl (小さめでスタイリッシュに)
-                PC: md:text-3xl (元のサイズでゆったりと) */}
-            <Link href="/store" className="text-xl md:text-3xl font-normal tracking-widest text-black hover:opacity-70 transition">
-              assemble store
-            </Link>
-            
-            {/* ▼ 魔法2：メニューのサイズと隙間の調整
-                スマホ: text-xs (文字小さめ), gap-4 (隙間狭め)
-                PC: md:text-sm, md:gap-8 (元のゆったりサイズ) */}
-            <nav className="flex gap-4 md:gap-8 text-xs md:text-sm tracking-widest font-light">
-              <Link href="/store" className="hover:text-gray-400 transition">HOME</Link>
+            {/* =========================================
+                スマホ専用：左側のハンバーガー（3本線）
+            ========================================= */}
+            <div className="md:hidden flex items-center">
+              <label htmlFor="global-mobile-menu" className="cursor-pointer p-2 -ml-2 flex flex-col gap-[5px]">
+                <div className="w-5 h-[1px] bg-black"></div>
+                <div className="w-5 h-[1px] bg-black"></div>
+                <div className="w-5 h-[1px] bg-black"></div>
+              </label>
+            </div>
+
+            {/* =========================================
+                ロゴ：スマホでは絶対中央、PCでは左寄せ
+            ========================================= */}
+            <div className="flex-1 text-center md:text-left">
+              <Link href="/" className="text-xl md:text-3xl font-normal tracking-widest text-black hover:opacity-70 transition">
+                assemble store
+              </Link>
+            </div>
+
+            {/* =========================================
+                PC専用：右側のナビゲーション
+            ========================================= */}
+            <nav className="hidden md:flex gap-8 text-sm tracking-widest font-light uppercase items-center">
+              <Link href="/" className="hover:text-gray-400 transition">HOME</Link>
+              <Link href="/store" className="hover:text-gray-400 transition">STORE</Link>
               <Link href="/about" className="hover:text-gray-400 transition">ABOUT</Link>
             </nav>
+
+            {/* スマホ専用：右側のダミー空間（ロゴを完璧に真ん中に配置するため） */}
+            <div className="md:hidden w-9"></div>
+
           </div>
         </header>
 
+        {/* =========================================
+            スマホ専用：スライドしてくるフルスクリーンメニュー
+        ========================================= */}
+        <div className="fixed inset-0 bg-white z-50 transform -translate-x-full peer-checked:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden overflow-y-auto flex flex-col">
+          
+          {/* メニュー上部（閉じるボタン） */}
+          <div className="flex justify-between items-center p-5 border-b border-gray-100">
+            <span className="text-xs tracking-widest uppercase text-gray-400">MENU</span>
+            <label htmlFor="global-mobile-menu" className="text-3xl cursor-pointer p-2 -mr-2 font-light text-black hover:opacity-50">
+              ×
+            </label>
+          </div>
+
+          {/* メニューの中身（ページリンク ＋ カテゴリ） */}
+          <div className="p-8 flex flex-col gap-10 text-sm tracking-widest uppercase font-light">
+            
+            {/* メインページ群 */}
+            <div className="flex flex-col gap-6">
+              <Link href="/">HOME</Link>
+              <Link href="/store">STORE</Link>
+              <Link href="/about">ABOUT</Link>
+            </div>
+
+            <hr className="border-gray-100" />
+
+            {/* カテゴリ群（Storeページに飛ばす） */}
+            <div className="flex flex-col gap-6 text-xs">
+              <span className="text-[10px] text-gray-400 mb-2">CATEGORY</span>
+              <Link href="/store" className="hover:text-gray-500">ALL ITEMS</Link>
+              <Link href="/store?tag=outerwear" className="hover:text-gray-500">OUTERWEAR</Link>
+              <Link href="/store?tag=tops" className="hover:text-gray-500">TOPS</Link>
+              <Link href="/store?tag=pants" className="hover:text-gray-500">PANTS</Link>
+            </div>
+
+          </div>
+        </div>
+
+        {/* メインコンテンツ */}
         <main className="flex-grow">
           {children}
         </main>
 
-        {/* ▼ バグ修正：bg-gray はTailwindに存在しないため効いていませんでした！
-            真っ黒なら bg-black、少し薄い黒なら bg-gray-900 などを指定します。
-            （今回はハイエンド感を出すため、極限まで薄いグレー bg-gray-50 にし、文字もグレーにしてみました） */}
         <footer className="bg-gray-50 text-gray-400 p-8 text-center mt-auto border-t border-gray-100">
           <p className="tracking-widest text-[10px] md:text-xs font-light">
             © {new Date().getFullYear()} assemble store. All rights reserved.
