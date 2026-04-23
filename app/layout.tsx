@@ -41,7 +41,7 @@ export default function RootLayout({
                 ロゴ：スマホでは絶対中央、PCでは左寄せ
             ========================================= */}
             <div className="flex-1 text-center md:text-left">
-              <Link href="/" className="text-xl md:text-3xl font-normal tracking-widest text-black hover:opacity-70 transition">
+              <Link href="/store" className="text-xl md:text-3xl font-normal tracking-widest text-black hover:opacity-70 transition">
                 assemble store
               </Link>
             </div>
@@ -79,20 +79,22 @@ export default function RootLayout({
             
             {/* メインページ群 */}
             <div className="flex flex-col gap-6">
-              <Link href="/">HOME</Link>
-              <Link href="/store">STORE</Link>
-              <Link href="/about">ABOUT</Link>
+              {/* ▼ 魔法：スマホメニューだけ <Link> ではなく <a> タグに書き換え！ */}
+              <a href="/">HOME</a>
+              <a href="/store">STORE</a>
+              <a href="/about">ABOUT</a>
             </div>
 
             <hr className="border-gray-100" />
 
-            {/* カテゴリ群（Storeページに飛ばす） */}
+            {/* カテゴリ群 */}
             <div className="flex flex-col gap-6 text-xs">
               <span className="text-[10px] text-gray-400 mb-2">CATEGORY</span>
-              <Link href="/store" className="hover:text-gray-500">ALL ITEMS</Link>
-              <Link href="/store?tag=outerwear" className="hover:text-gray-500">OUTERWEAR</Link>
-              <Link href="/store?tag=tops" className="hover:text-gray-500">TOPS</Link>
-              <Link href="/store?tag=pants" className="hover:text-gray-500">PANTS</Link>
+              {/* ▼ ここもすべて <a> タグに書き換え！ */}
+              <a href="/store" className="hover:text-gray-500">ALL ITEMS</a>
+              <a href="/store?tag=outerwear" className="hover:text-gray-500">OUTERWEAR</a>
+              <a href="/store?tag=tops" className="hover:text-gray-500">TOPS</a>
+              <a href="/store?tag=pants" className="hover:text-gray-500">PANTS</a>
             </div>
 
           </div>

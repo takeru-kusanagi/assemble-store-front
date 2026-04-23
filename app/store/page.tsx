@@ -4,11 +4,15 @@ import Link from 'next/link';
 const shopifyDomain = process.env.SHOPIFY_STORE_DOMAIN;
 const storefrontAccessToken = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
 
-async function getProducts() {
+// ★変更1：関数が「tag」を受け取れるようにする
+async function getStoreData(tag?: string) {
   const endpoint = `https://${shopifyDomain}/api/2024-01/graphql.json`;
+  
+  // ★変更2：Shopifyへの要求（Query）を、タグで絞り込めるように変更
+  // tagが指定されていれば `tag:〇〇` で検索し、なければ全件取得する
   const query = `
-    {
-      products(first: 20) {
+    query getProducts($query: String!) {
+      products(first: 20, query: $query) {
         edges {
           node {
             id
@@ -30,8 +34,17 @@ async function getProducts() {
           }
         }
       }
+      menu(handle: "brands") {
+        items {
+          title
+        }
+      }
     }
   `;
+
+  // tagがあればそれを使い、なければ "available_for_sale:true"（販売中のもの全て）などにするのが一般的ですが、
+  // 今回はシンプルに、tagがあればタグ検索、なければ全件という形にします。
+  const searchQuery = tag ? `tag:${tag}` : "";
 
   const res = await fetch(endpoint, {
     method: 'POST',
@@ -39,16 +52,34 @@ async function getProducts() {
       'Content-Type': 'application/json',
       'X-Shopify-Storefront-Access-Token': storefrontAccessToken!,
     },
-    body: JSON.stringify({ query }),
+    // query と variables を一緒に送る
+    body: JSON.stringify({ 
+      query, 
+      variables: { query: searchQuery } 
+    }),
     cache: 'no-store', 
   });
 
   const json = await res.json();
-  return json.data.products.edges;
+  
+  return {
+    products: json.data?.products?.edges || [],
+    brands: json.data?.menu?.items || [],
+  };
 }
 
-export default async function StorePage() {
-  const products = await getProducts();
+// ★変更3：Next.jsの仕様変更に合わせ、searchParams を非同期で受け取る
+export default async function StorePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  // URLの ?tag=〇〇 の部分を取得
+  const resolvedSearchParams = await searchParams;
+  const tag = typeof resolvedSearchParams.tag === 'string' ? resolvedSearchParams.tag : undefined;
+
+  // tagを渡してデータを取得
+  const { products, brands } = await getStoreData(tag);
 
   return (
     <main className="min-h-screen bg-white text-gray-900 font-sans antialiased relative">
@@ -56,92 +87,86 @@ export default async function StorePage() {
       <div className="max-w-[1600px] mx-auto px-6 md:px-12 py-12 md:py-20 flex flex-col md:flex-row gap-12 md:gap-32 lg:gap-60">
 
         {/* =========================================
-            スマホ専用：フィルター呼び出しボタン
+            左側：サイドバー（PCのみ表示）
         ========================================= */}
-        <div className="md:hidden flex justify-between items-center border-b border-gray-100 pb-4">
-          <span className="text-[10px] tracking-widest text-gray-400">{products.length} ITEMS</span>
-          {/* このラベルをクリックすると、下のチェックボックスがONになる魔法 */}
-          <label htmlFor="mobile-menu" className="text-xs tracking-widest uppercase cursor-pointer text-black hover:text-gray-500 transition">
-            + Filter
-          </label>
-        </div>
-
-        {/* 魔法の仕掛け（画面には見えないチェックボックス） */}
-        <input type="checkbox" id="mobile-menu" className="peer hidden" />
-
-        {/* =========================================
-            左側：サイドバー（スマホ：右からスライドイン / PC：左固定）
-        ========================================= */}
-        <aside className="
-          fixed inset-y-0 right-0 z-50 w-full max-w-xs bg-white p-8 overflow-y-auto transform translate-x-full transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] peer-checked:translate-x-0
-          md:static md:w-48 md:shrink-0 md:p-0 md:transform-none md:bg-transparent md:z-auto md:overflow-visible md:sticky md:top-32 h-fit
-        ">
-          
-          {/* スマホ専用：閉じるボタン */}
-          <div className="flex justify-between items-center md:hidden mb-12">
-            <span className="text-xs tracking-widest uppercase text-gray-400">Filter</span>
-            <label htmlFor="mobile-menu" className="text-2xl cursor-pointer p-2 -mr-2 font-light text-gray-400 hover:text-black">×</label>
-          </div>
-
-          {/* メニュー群（内容はそのまま） */}
+        <aside className="hidden md:block w-48 shrink-0 sticky top-32 h-fit">
           <div className="flex flex-col gap-12 text-[10px] tracking-widest uppercase">
+            
             <div className="flex flex-col gap-4">
               <h2 className="text-gray-400 mb-2">Category</h2>
-              <Link href="/store" className="hover:text-gray-500 transition">All</Link>
-              <Link href="/store?tag=outerwear" className="hover:text-gray-500 transition">Outerwear</Link>
-              <Link href="/store?tag=tops" className="hover:text-gray-500 transition">Tops</Link>
-              <Link href="/store?tag=pants" className="hover:text-gray-500 transition">Pants</Link>
-              <Link href="/store?tag=accessories" className="hover:text-gray-500 transition">Accessories</Link>
+              <Link href="/store" className={`transition ${!tag ? 'text-black' : 'text-gray-500 hover:text-black'}`}>All</Link>
+              <Link href="/store?tag=outerwear" className={`transition ${tag === 'outerwear' ? 'text-black' : 'text-gray-500 hover:text-black'}`}>Outerwear</Link>
+              <Link href="/store?tag=tops" className={`transition ${tag === 'tops' ? 'text-black' : 'text-gray-500 hover:text-black'}`}>Tops</Link>
+              <Link href="/store?tag=pants" className={`transition ${tag === 'pants' ? 'text-black' : 'text-gray-500 hover:text-black'}`}>Pants</Link>
+              <Link href="/store?tag=accessories" className={`transition ${tag === 'accessories' ? 'text-black' : 'text-gray-500 hover:text-black'}`}>Accessories</Link>
             </div>
 
             <div className="flex flex-col gap-4">
               <h2 className="text-gray-400 mb-2">Concept</h2>
-              <Link href="/store?tag=vintage" className="hover:text-gray-500 transition">Vintage</Link>
-              <Link href="/store?tag=archive" className="hover:text-gray-500 transition">Archive</Link>
-              <Link href="/store?tag=designers" className="hover:text-gray-500 transition">Designers</Link>
-              <Link href="/store?tag=outdoor" className="hover:text-gray-500 transition">Outdoor</Link>
+              <Link href="/store?tag=american-casual" className={`transition ${tag === 'american-casual' ? 'text-black' : 'text-gray-500 hover:text-black'}`}>American casual</Link>
+              <Link href="/store?tag=designers" className={`transition ${tag === 'designers' ? 'text-black' : 'text-gray-500 hover:text-black'}`}>Designers</Link>
+              <Link href="/store?tag=vintage" className={`transition ${tag === 'vintage' ? 'text-black' : 'text-gray-500 hover:text-black'}`}>Vintage</Link>
+              <Link href="/store?tag=outdoor" className={`transition ${tag === 'outdoor' ? 'text-black' : 'text-gray-500 hover:text-black'}`}>Outdoor</Link>
+              <Link href="/store?tag=others" className={`transition ${tag === 'others' ? 'text-black' : 'text-gray-500 hover:text-black'}`}>Others</Link>
             </div>
 
             <div className="flex flex-col gap-4">
               <h2 className="text-gray-400 mb-2">Brand</h2>
-              <Link href="/store?tag=arcteryx" className="hover:text-gray-500 transition">Arc'teryx</Link>
-              <Link href="/store?tag=jil-sander" className="hover:text-gray-500 transition">Jil Sander</Link>
-              <Link href="/store?tag=maison-margiela" className="hover:text-gray-500 transition">Maison Margiela</Link>
-              <Link href="/store?tag=unknown" className="hover:text-gray-500 transition">Unknown</Link>
+              {brands.length > 0 ? (
+                brands.map((brand: any, index: number) => {
+                  const tagUrl = brand.title.toLowerCase().replace(/\s+/g, '-');
+                  return (
+                    <Link 
+                      key={index} 
+                      href={`/store?tag=${tagUrl}`} 
+                      className={`transition ${tag === tagUrl ? 'text-black' : 'text-gray-500 hover:text-black'}`}
+                    >
+                      {brand.title}
+                    </Link>
+                  );
+                })
+              ) : (
+                <span className="text-gray-300">NO BRANDS YET</span>
+              )}
             </div>
+
           </div>
         </aside>
-
-        {/* スマホ専用：メニューが開いている時の背景を少し暗くする（クリックで閉じる） */}
-        <label htmlFor="mobile-menu" className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden peer-checked:block md:hidden cursor-pointer"></label>
 
         {/* =========================================
             右側：商品一覧グリッド
         ========================================= */}
-        <div className="flex-1 grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-12 md:gap-x-8 md:gap-y-16">
-          
-          {products.map(({ node }: any) => (
-            <Link href={`/product/${node.handle}`} key={node.id} className="group block">
-              {node.images.edges[0] && (
-                <div className="overflow-hidden bg-[#f9f9f9] mb-4 md:mb-5 aspect-square border border-gray-100 flex items-center justify-center">
-                  <img
-                    src={node.images.edges[0].node.url}
-                    alt={node.title}
-                    className="w-full h-full object-contain mix-blend-multiply transition duration-700 group-hover:scale-105 p-4"
-                  />
-                </div>
-              )}
-              <div className="text-left flex flex-col gap-1">
-                <h3 className="text-[11px] md:text-xs font-light tracking-widest text-black group-hover:text-gray-500 transition leading-snug">
-                  {node.title}
-                </h3>
-                <p className="text-[10px] font-light text-gray-500 tracking-wider">
-                  ¥{parseInt(node.priceRange.minVariantPrice.amount).toLocaleString()}
-                </p>
-              </div>
-            </Link>
-          ))}
-          
+        <div className="flex-1">
+          {/* 検索結果が0件だった場合のメッセージ */}
+          {products.length === 0 ? (
+            <div className="text-center py-20 text-xs tracking-widest text-gray-400 uppercase">
+              No items found for "{tag}"
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-12 md:gap-x-8 md:gap-y-16">
+              {products.map(({ node }: any) => (
+                <Link href={`/product/${node.handle}`} key={node.id} className="group block">
+                  {node.images.edges[0] && (
+                    <div className="overflow-hidden mb-4 md:mb-5 aspect-square border border-gray-100 flex items-center justify-center bg-white">
+                    <img
+                      src={node.images.edges[0].node.url}
+                      alt={node.title}
+                      className="w-full h-full object-cover transition duration-700 group-hover:scale-105"
+                    />
+                  </div>
+                  )}
+                  <div className="text-left flex flex-col gap-1">
+                    <h3 className="text-[11px] md:text-xs font-light tracking-widest text-black group-hover:text-gray-500 transition leading-snug">
+                      {node.title}
+                    </h3>
+                    <p className="text-[10px] font-light text-gray-500 tracking-wider">
+                      ¥{parseInt(node.priceRange.minVariantPrice.amount).toLocaleString()}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
       </div>
