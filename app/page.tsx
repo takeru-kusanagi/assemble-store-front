@@ -9,7 +9,8 @@ async function getWelcomePhotos() {
 
   const endpointName = "welcome-photos"; 
 
-  const res = await fetch(`https://${domain}.microcms.io/api/v1/${endpointName}`, {
+  // ★修正1：URLの末尾に「?limit=100」をつけて、全件取得するように変更！
+  const res = await fetch(`https://${domain}.microcms.io/api/v1/${endpointName}?limit=100`, {
     headers: {
       'X-MICROCMS-API-KEY': apiKey!,
     },
@@ -44,7 +45,7 @@ function shuffleArray(array: string[]) {
 
 export default async function WelcomePage() {
   const welcomeImages = await getWelcomePhotos();
-  const shuffledImages = shuffleArray(welcomeImages).slice(0, 4);
+  const shuffledImages = shuffleArray(welcomeImages).slice(0, 7);
 
   return (
     <div className="min-h-[calc(100vh-80px)] bg-white flex flex-col items-center justify-between p-10 font-sans">
@@ -53,9 +54,12 @@ export default async function WelcomePage() {
         {shuffledImages.map((src, index) => (
           <img
             key={index}
-            src={src}
+            // ★修正2：画像URLにパラメータを足して、軽量化＆高速化する（横幅800px、webp形式、画質80%）
+            src={`${src}?w=800&fm=webp&q=80`}
             alt={`Welcome vintage archive ${index + 1}`}
             className="w-full h-auto object-contain bg-gray-50 border border-gray-100"
+            // ★さらに一工夫：最初の2枚だけ最優先で読み込み、残りはスクロールに合わせてサボりながら読み込む
+            loading={index < 2 ? "eager" : "lazy"}
           />
         ))}
       </div>
