@@ -45,7 +45,7 @@ function shuffleArray(array: string[]) {
 
 export default async function WelcomePage() {
   const welcomeImages = await getWelcomePhotos();
-  const shuffledImages = shuffleArray(welcomeImages).slice(0, 7);
+  const shuffledImages = shuffleArray(welcomeImages).slice(0, 8);
 
   return (
     <div className="min-h-[calc(100vh-80px)] bg-white flex flex-col items-center justify-between p-10 font-sans">

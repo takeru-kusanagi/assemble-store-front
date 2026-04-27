@@ -10,8 +10,19 @@ import CartDrawer from "@/components/CartDrawer";
 const inter = Inter({ subsets: ["latin"], weight: ["300", "400", "500", "700"] });
 
 export const metadata: Metadata = {
-  title: "Assemble store DX",
-  description: "Vintage T-shirts & Archives.",
+  title: "assemble store",
+  description: "Nothing is complete on its own. We gather the fragments. You form the whole.",
+  openGraph: {
+    title: "assemble store",
+    description: "Nothing is complete on its own. We gather the fragments. You form the whole.",
+    url: "https://assemble-store-front-git-main-takeru-kusanagis-projects.vercel.app/", // ★後で本番URLに書き換えます
+    siteName: "assemble store",
+    locale: "ja_JP",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image", // これを入れるとTwitterで画像が大きくカッコよく出ます！
+  },
 };
 
 async function getBrands() {
