@@ -1,5 +1,6 @@
 // app/page.tsx
 import Link from 'next/link';
+import ScrollToTop from './ScrollToTop'; // ★あとで作る魔法の部品を読み込む
 
 export const revalidate = 0;
 
@@ -9,7 +10,6 @@ async function getWelcomePhotos() {
 
   const endpointName = "welcome-photos"; 
 
-  // ★修正1：URLの末尾に「?limit=100」をつけて、全件取得するように変更！
   const res = await fetch(`https://${domain}.microcms.io/api/v1/${endpointName}?limit=100`, {
     headers: {
       'X-MICROCMS-API-KEY': apiKey!,
@@ -33,7 +33,6 @@ async function getWelcomePhotos() {
     .map((item: any) => item.photo.url);
 }
 
-// 配列をランダムに並べ替える関数
 function shuffleArray(array: string[]) {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -50,15 +49,16 @@ export default async function WelcomePage() {
   return (
     <div className="min-h-[calc(100vh-80px)] bg-white flex flex-col items-center justify-between p-10 font-sans">
       
+      {/* ★ここに魔法の部品を置く（画面には何も表示されません） */}
+      <ScrollToTop />
+
       <div className="flex-grow flex flex-col gap-1 w-full max-w-lg items-center justify-center">
         {shuffledImages.map((src, index) => (
           <img
             key={index}
-            // ★修正2：画像URLにパラメータを足して、軽量化＆高速化する（横幅800px、webp形式、画質80%）
             src={`${src}?w=800&fm=webp&q=80`}
             alt={`Welcome vintage archive ${index + 1}`}
             className="w-full h-auto object-contain bg-gray-50 border border-gray-100"
-            // ★さらに一工夫：最初の2枚だけ最優先で読み込み、残りはスクロールに合わせてサボりながら読み込む
             loading={index < 2 ? "eager" : "lazy"}
           />
         ))}
