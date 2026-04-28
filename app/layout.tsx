@@ -184,8 +184,23 @@ export default async function RootLayout({
             {children}
           </main>
 
-          <footer className="bg-gray-50 text-gray-400 p-8 text-center mt-auto border-t border-gray-100">
-            <p className="tracking-widest text-[10px] md:text-xs font-light">
+          <footer className="bg-gray-50 text-gray-400 py-8 px-6 mt-auto border-t border-gray-100 flex flex-col md:flex-row justify-center items-center gap-6 md:gap-12">
+            
+            {/* ★法務ページへのリンク集 */}
+            <div className="flex flex-wrap justify-center gap-x-6 md:gap-x-8 text-[7px] tracking-[.15em] md:tracking-[.2em] font-medium">
+              <Link href="/legal" className="hover:text-black transition-colors duration-300">
+                LEGAL
+              </Link>
+              <Link href="/terms" className="hover:text-black transition-colors duration-300 uppercase">
+                Terms of Service
+              </Link>
+              <Link href="/privacy" className="hover:text-black transition-colors duration-300 uppercase">
+                Privacy Policy
+              </Link>
+            </div>
+
+            {/* ★コピーライト */}
+            <p className="tracking-widest text-[8px] md:text-[10px] font-light">
               © {new Date().getFullYear()} assemble store. All rights reserved.
             </p>
           </footer>
