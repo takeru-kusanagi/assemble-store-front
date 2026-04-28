@@ -6,7 +6,7 @@ import "./globals.css";
 import { CartProvider } from "@/components/CartProvider";
 import CartIcon from "@/components/CartIcon";
 import CartDrawer from "@/components/CartDrawer";
-import { Analytics } from '@vercel/analytics/react';
+import { Analytics } from "@vercel/analytics/next"
 
 const inter = Inter({ subsets: ["latin"], weight: ["300", "400", "500", "700"] });
 
@@ -207,7 +207,7 @@ export default async function RootLayout({
           </footer>
 
         </CartProvider>
-        
+
         <Analytics />
 
       </body>
