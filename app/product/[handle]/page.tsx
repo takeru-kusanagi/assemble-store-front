@@ -152,7 +152,7 @@ export default async function ProductPage({ params }: { params: Promise<{ handle
             </h1>
             
             {/* 価格（タイトルとの距離を詰め、説明文との距離を広げる） */}
-            <p className="text-[16px] tracking-widest text-gray-800 mb-8">
+            <p className="text-[14px] tracking-widest text-gray-800 mb-8">
               ¥ {price} JPY
             </p>
 

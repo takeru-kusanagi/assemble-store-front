@@ -133,12 +133,17 @@ export default async function RootLayout({
               スマホ専用メニュー（左からスライド）
           ========================================= */}
           <div className="fixed inset-0 bg-white z-50 transform -translate-x-full peer-checked:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden overflow-y-auto flex flex-col">
-            <div className="flex justify-between items-center p-8 border-b border-gray-100">
-              <span className="text-xs tracking-widest uppercase text-gray-400">MENU</span>
-              <label htmlFor="global-mobile-menu" className="text-3xl cursor-pointer p-2 -mr-2 font-medium text-black hover:opacity-50">
-                ×
-              </label>
-            </div>
+            <div className="flex justify-between items-center px-8 py-6 border-b border-gray-100">
+                {/* MENUの文字（※アイコンと視覚的な高さを完璧に合わせるため、pt-[2px]で1ミリだけ下に調整しています） */}
+                <span className="text-xs tracking-widest uppercase text-gray-400 pt-[2px]">MENU</span>
+                
+                {/* ×ボタンをテキストから「美しいSVGアイコン」に変更して完璧な中央揃えに！ */}
+                <label htmlFor="global-mobile-menu" className="cursor-pointer p-2 -mr-2 text-black hover:opacity-50 transition-opacity flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </label>
+              </div>
             {/* =========================================
                 ★アップデート：洗練されたスマホメニュー
             ========================================= */}

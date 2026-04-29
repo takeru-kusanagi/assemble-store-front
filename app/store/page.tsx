@@ -169,7 +169,7 @@ export default async function StorePage({
               No items found for "{tag}"
             </div>
           ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-12 md:gap-x-2 md:gap-y-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-7 md:gap-x-2 md:gap-y-8">
               {products.map(({ node }: any) => (
                 <Link href={`/product/${node.handle}`} key={node.id} className="group block">
                   {node.images.edges[0] && (
@@ -181,11 +181,12 @@ export default async function StorePage({
                     />
                   </div>
                   )}
-                  <div className="text-left flex flex-col gap-1">
-                    <h3 className="text-[11px] md:text-xs font-light tracking-widest text-black group-hover:text-gray-500 transition leading-snug">
+                  {/* ★アップデート：右側に余白(pr-4 md:pr-8)を設けて、隣の文字との衝突を防ぐ */}
+                  <div className="text-left flex flex-col gap-1.5 pr-2 md:pr-6">
+                    <h3 className="text-[11px] md:text-xs font-light tracking-widest text-black group-hover:text-gray-500 transition leading-[1.4]">
                       {node.title}
                     </h3>
-                    <p className="text-[10px] font-light text-gray-500 tracking-wider">
+                    <p className="text-[10px] font-light text-gray-500 tracking-wider mt-0.5">
                       ¥{parseInt(node.priceRange.minVariantPrice.amount).toLocaleString()}
                     </p>
                   </div>
