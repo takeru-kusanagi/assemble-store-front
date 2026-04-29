@@ -6,7 +6,8 @@ import "./globals.css";
 import { CartProvider } from "@/components/CartProvider";
 import CartIcon from "@/components/CartIcon";
 import CartDrawer from "@/components/CartDrawer";
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/next";
+import InstagramIcon from '@/components/InstagramIcon';
 
 const inter = Inter({ subsets: ["latin"], weight: ["300", "400", "500", "700"] });
 
@@ -50,7 +51,7 @@ async function getBrands() {
         'X-Shopify-Storefront-Access-Token': token,
       },
       body: JSON.stringify({ query }),
-      cache: 'force-cache', 
+      next: { revalidate: 60 },
     });
     const json = await res.json();
     return json.data?.menu?.items || [];
@@ -132,43 +133,54 @@ export default async function RootLayout({
               スマホ専用メニュー（左からスライド）
           ========================================= */}
           <div className="fixed inset-0 bg-white z-50 transform -translate-x-full peer-checked:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden overflow-y-auto flex flex-col">
-            <div className="flex justify-between items-center p-5 border-b border-gray-100">
+            <div className="flex justify-between items-center p-8 border-b border-gray-100">
               <span className="text-xs tracking-widest uppercase text-gray-400">MENU</span>
               <label htmlFor="global-mobile-menu" className="text-3xl cursor-pointer p-2 -mr-2 font-medium text-black hover:opacity-50">
                 ×
               </label>
             </div>
-            <div className="p-8 flex flex-col gap-12 text-sm tracking-widest uppercase font-medium pb-24">
-              <div className="flex flex-col gap-4">
-                <a href="/">HOME</a>
-                <a href="/store">STORE</a>
-                <a href="/about">ABOUT</a>
+            {/* =========================================
+                ★アップデート：洗練されたスマホメニュー
+            ========================================= */}
+            <div className="p-8 flex flex-col gap-8 tracking-widest uppercase font-medium pb-24">
+              
+              {/* メインメニュー（少し大きく、力強く） */}
+              <div className="flex flex-col gap-5 text-base">
+                <a href="/" className="hover:text-gray-400 transition-colors duration-300">HOME</a>
+                <a href="/store" className="hover:text-gray-400 transition-colors duration-300">STORE</a>
+                <a href="/about" className="hover:text-gray-400 transition-colors duration-300">ABOUT</a>
               </div>
+              
               <hr className="border-gray-100" />
-              <div className="flex flex-col gap-10 text-xs">
-                <div className="flex flex-col gap-4">
-                  <span className="text-[10px] text-gray-400 mb-1">CATEGORY</span>
-                  <a href="/store" className="hover:text-gray-500">ALL</a>
-                  <a href="/store?tag=outerwear" className="hover:text-gray-500">OUTERWEAR</a>
-                  <a href="/store?tag=tops" className="hover:text-gray-500">TOPS</a>
-                  <a href="/store?tag=pants" className="hover:text-gray-500">PANTS</a>
-                  <a href="/store?tag=accessories" className="hover:text-gray-500">ACCESSORIES</a>
+              
+              {/* サブメニュー群（色を少し落として上品に） */}
+              <div className="flex flex-col gap-8 text-xs">
+                
+                <div className="flex flex-col gap-3">
+                  <span className="text-[10px] text-gray-400 mb-1 font-normal tracking-[0.2em]">CATEGORY</span>
+                  <a href="/store" className="text-gray-600 hover:text-black transition-colors duration-300">ALL</a>
+                  <a href="/store?tag=outerwear" className="text-gray-600 hover:text-black transition-colors duration-300">OUTERWEAR</a>
+                  <a href="/store?tag=tops" className="text-gray-600 hover:text-black transition-colors duration-300">TOPS</a>
+                  <a href="/store?tag=pants" className="text-gray-600 hover:text-black transition-colors duration-300">PANTS</a>
+                  <a href="/store?tag=accessories" className="text-gray-600 hover:text-black transition-colors duration-300">ACCESSORIES</a>
                 </div>
-                <div className="flex flex-col gap-4">
-                  <span className="text-[10px] text-gray-400 mb-1">CONCEPT</span>
-                  <a href="/store?tag=american-casual" className="hover:text-gray-500">AMERICAN CASUAL</a>
-                  <a href="/store?tag=designers" className="hover:text-gray-500">DESIGNERS</a>
-                  <a href="/store?tag=vintage" className="hover:text-gray-500">VINTAGE</a>
-                  <a href="/store?tag=outdoor" className="hover:text-gray-500">OUTDOOR</a>
-                  <a href="/store?tag=others" className="hover:text-gray-500">OTHERS</a>
+                
+                <div className="flex flex-col gap-3">
+                  <span className="text-[10px] text-gray-400 mb-1 font-normal tracking-[0.2em]">CONCEPT</span>
+                  <a href="/store?tag=american-casual" className="text-gray-600 hover:text-black transition-colors duration-300">AMERICAN CASUAL</a>
+                  <a href="/store?tag=designers" className="text-gray-600 hover:text-black transition-colors duration-300">DESIGNERS</a>
+                  <a href="/store?tag=vintage" className="text-gray-600 hover:text-black transition-colors duration-300">VINTAGE</a>
+                  <a href="/store?tag=outdoor" className="text-gray-600 hover:text-black transition-colors duration-300">OUTDOOR</a>
+                  <a href="/store?tag=others" className="text-gray-600 hover:text-black transition-colors duration-300">OTHERS</a>
                 </div>
-                <div className="flex flex-col gap-4">
-                  <span className="text-[10px] text-gray-400 mb-1">BRAND</span>
+                
+                <div className="flex flex-col gap-3">
+                  <span className="text-[10px] text-gray-400 mb-1 font-normal tracking-[0.2em]">BRAND</span>
                   {brands.length > 0 ? (
                     brands.map((brand: any, index: number) => {
                       const tagUrl = brand.title.toLowerCase().replace(/\s+/g, '-');
                       return (
-                        <a key={index} href={`/store?tag=${tagUrl}`} className="hover:text-gray-500">
+                        <a key={index} href={`/store?tag=${tagUrl}`} className="text-gray-600 hover:text-black transition-colors duration-300">
                           {brand.title}
                         </a>
                       );
@@ -178,6 +190,18 @@ export default async function RootLayout({
                   )}
                 </div>
               </div>
+
+              {/* インスタアイコン（一番下に独立して配置） */}
+              <div className="pt-2">
+                <a 
+                  href="https://instagram.com/assemble.store" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-gray-400 hover:text-black transition-colors duration-300 w-fit block"
+                >
+                  <InstagramIcon />
+                </a>
+              </div>
             </div>
           </div>
 
@@ -186,7 +210,7 @@ export default async function RootLayout({
           </main>
 
           <footer className="bg-gray-50 text-gray-400 py-8 px-6 mt-auto border-t border-gray-100 flex flex-col md:flex-row justify-center items-center gap-6 md:gap-12">
-            
+
             {/* ★法務ページへのリンク集 */}
             <div className="flex flex-wrap justify-center gap-x-6 md:gap-x-8 text-[7px] tracking-[.15em] md:tracking-[.2em] font-medium">
               <Link href="/legal" className="hover:text-black transition-colors duration-300">

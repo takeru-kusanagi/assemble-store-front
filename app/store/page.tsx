@@ -1,5 +1,6 @@
 // app/store/page.tsx
 import Link from 'next/link';
+import InstagramIcon from '@/components/InstagramIcon';
 
 const shopifyDomain = process.env.SHOPIFY_STORE_DOMAIN;
 const storefrontAccessToken = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
@@ -141,6 +142,18 @@ export default async function StorePage({
               ) : (
                 <span className="text-gray-300">NO BRANDS YET</span>
               )}
+            </div>
+
+            {/* ★ここに追加：SNSへのリンク */}
+            <div className="flex flex-col gap-4 pt-0">
+              <a 
+                href="https://instagram.com/assemble.store" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-black hover:opacity-50 transition-opacity w-fit"
+              >
+                <InstagramIcon />
+              </a>
             </div>
 
           </div>
