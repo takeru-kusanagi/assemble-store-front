@@ -1,14 +1,14 @@
 // app/page.tsx
 import Link from 'next/link';
-import ScrollToTop from './ScrollToTop'; // ★あとで作る魔法の部品を読み込む
+import ScrollToTop from './ScrollToTop';
 
 export const revalidate = 0;
 
-async function getWelcomePhotos() {
+async function getHomePhotos() {
   const domain = process.env.MICROCMS_SERVICE_DOMAIN;
   const apiKey = process.env.MICROCMS_API_KEY;
 
-  const endpointName = "welcome-photos"; 
+  const endpointName = "home-photos"; 
 
   const res = await fetch(`https://${domain}.microcms.io/api/v1/${endpointName}?limit=100`, {
     headers: {
@@ -43,15 +43,18 @@ function shuffleArray(array: string[]) {
 }
 
 export default async function WelcomePage() {
-  const welcomeImages = await getWelcomePhotos();
-  const shuffledImages = shuffleArray(welcomeImages).slice(0, 8);
+  const welcomeImages = await getHomePhotos();
+  
+  // ★スライスを(0, 1)にして、ランダムに1枚だけ取得するように設定！
+  const shuffledImages = shuffleArray(welcomeImages).slice(0, 1);
 
   return (
     <div className="min-h-[calc(100vh-80px)] bg-white flex flex-col items-center justify-between p-10 font-sans">
       
-      {/* ★ここに魔法の部品を置く（画面には何も表示されません） */}
+      {/* 魔法の部品 */}
       <ScrollToTop />
 
+      {/* 画像コンテナ：flex-growで画面の中央に配置 */}
       <div className="flex-grow flex flex-col gap-1 w-full max-w-lg items-center justify-center">
         {shuffledImages.map((src, index) => (
           <img
@@ -59,16 +62,18 @@ export default async function WelcomePage() {
             src={`${src}?w=800&fm=webp&q=80`}
             alt={`Welcome vintage archive ${index + 1}`}
             className="w-full h-auto object-contain bg-gray-50 border border-gray-100"
-            loading={index < 2 ? "eager" : "lazy"}
+            loading="eager" // ★1枚だけなので、最初から爆速で読み込む「eager」に統一
           />
         ))}
       </div>
 
+      {/* ENTER STORE ボタン：一番下に綺麗に配置される */}
       <div className="text-center mt-12 mb-10">
         <Link href="/store" className="text-sm tracking-[.3em] font-medium text-black hover:text-gray-400 transition-all duration-300">
           ENTER STORE
         </Link>
       </div>
+      
     </div>
   );
 }
