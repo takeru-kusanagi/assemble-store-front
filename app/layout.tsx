@@ -103,6 +103,7 @@ export default async function RootLayout({
               <nav className="hidden md:flex gap-8 text-sm tracking-widest font-medium uppercase items-center">
                 <Link href="/" className="hover:text-gray-400 transition">HOME</Link>
                 <Link href="/store" className="hover:text-gray-400 transition">STORE</Link>
+                <Link href="/contact" className="hover:text-gray-400 transition">CONTACT</Link>
                 <Link href="/about" className="hover:text-gray-400 transition">ABOUT</Link>
                 
                 {/* ★アップデート：PC用カートアイコン（スクショに合わせたスクエア型） */}
@@ -153,6 +154,7 @@ export default async function RootLayout({
               <div className="flex flex-col gap-5 text-base">
                 <a href="/" className="hover:text-gray-400 transition-colors duration-300">HOME</a>
                 <a href="/store" className="hover:text-gray-400 transition-colors duration-300">STORE</a>
+                <a href="/contact" className="hover:text-gray-400 transition-colors duration-300">CONTACT</a>
                 <a href="/about" className="hover:text-gray-400 transition-colors duration-300">ABOUT</a>
               </div>
               
