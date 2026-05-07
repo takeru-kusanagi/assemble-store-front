@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import AddToCartButton from '@/components/AddToCartButton';
+import ImageIndicators from '@/components/ImageIndicators';
 
 async function getProduct(handle: string) {
   const domain = process.env.SHOPIFY_STORE_DOMAIN;
@@ -81,6 +82,7 @@ export default async function ProductPage({ params }: { params: Promise<{ handle
   const originalTags = product.tags; // ★名前を originalTags に変更しました
   const isAvailable = product.availableForSale;
   const variantId = product.variants.edges[0]?.node.id;
+  const scrollContainerId = 'product-image-scroll-container';
 
   return (
     <main className="min-h-screen bg-white text-black font-sans antialiased">
@@ -95,22 +97,18 @@ export default async function ProductPage({ params }: { params: Promise<{ handle
       <div className="max-w-[1600px] mx-auto px-6 md:px-12 pb-32 flex flex-col md:flex-row gap-12 md:gap-24 lg:gap-32">
 
         {/* 左側（画像エリア） */}
-        {/* 画像の幅を少し広げ（md:w-[65%]）、余白をなくす */}
         <div className="w-full md:w-[65%]">
-          <div className="flex md:flex-col overflow-x-auto md:overflow-x-visible snap-x snap-mandatory scrollbar-hide gap-4 md:gap-1">
+          {/* ★変更：id={scrollContainerId} を追加 */}
+          <div id={scrollContainerId} className="flex md:flex-col overflow-x-auto md:overflow-x-visible snap-x snap-mandatory scrollbar-hide gap-4 md:gap-1">
               {images.map((img: any, index: number) => (
-              // 背景を白にし、object-cover でコンテナいっぱいに広げる（multiplyは削除）
               <div key={index} className="min-w-full md:min-w-0 snap-center bg-white flex items-center justify-center">
                   <img src={img.url} alt={img.altText || title} className="w-full h-full object-cover" />
               </div>
               ))}
           </div>
 
-          <div className="flex md:hidden justify-center gap-2 mt-6">
-              {images.map((_: any, i: number) => (
-              <div key={i} className="w-[3px] h-[3px] bg-gray-300 rounded-full"></div>
-              ))}
-          </div>
+          {/* ★変更：ここにあったインジケーターを、新しいコンポーネントに置き換え */}
+          <ImageIndicators imageCount={images.length} containerId={scrollContainerId} />
         </div>
 
         {/* 右側（情報エリア） */}
@@ -123,7 +121,7 @@ export default async function ProductPage({ params }: { params: Promise<{ handle
             {originalTags && originalTags.length > 0 ? (
                 originalTags.map((tag: string, index: number) => {
                 // ここでリンク用のURL（小文字＆ハイフン）を生成
-                const tagUrl = tag.toLowerCase().replace(/\s+/g, '-');
+                const tagUrl = tag;
                 return (
                     <span key={index} className="flex items-center">
                     <Link 
@@ -151,9 +149,13 @@ export default async function ProductPage({ params }: { params: Promise<{ handle
               {title}
             </h1>
             
-            {/* 価格（タイトルとの距離を詰め、説明文との距離を広げる） */}
-            <p className="text-[14px] tracking-widest text-gray-800 mb-8">
-              ¥ {price} JPY
+            {/* ★変更：売り切れの場合は赤字でSOLD OUT、在庫があれば価格を表示 */}
+            <p className="text-[14px] tracking-widest font-medium mb-8">
+              {isAvailable ? (
+                <span className="text-gray-800">¥ {price} JPY</span>
+              ) : (
+                <span className="text-red-700">SOLD OUT</span>
+              )}
             </p>
 
             {/* 説明文（フォントを極限まで洗練） */}

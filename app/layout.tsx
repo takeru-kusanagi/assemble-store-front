@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "assemble store",
     description: "Nothing is complete on its own. We gather the fragments. You form the whole.",
-    url: "https://assemble-store-front-git-main-takeru-kusanagis-projects.vercel.app/", // ★後で本番URLに書き換えます
+    url: "https://www.assemble-store.com/",
     siteName: "assemble store",
     locale: "ja_JP",
     type: "website",
@@ -149,7 +149,7 @@ export default async function RootLayout({
             {/* =========================================
                 ★アップデート：洗練されたスマホメニュー
             ========================================= */}
-            <div className="p-8 flex flex-col gap-8 tracking-widest uppercase font-medium pb-24">
+            <div className="p-8 flex flex-col gap-8 tracking-widest font-medium pb-24">
               
               {/* メインメニュー（少し大きく、力強く） */}
               <div className="flex flex-col gap-5 text-base">
